@@ -1,3 +1,29 @@
+<!-- 
+  /*******************************************************************************
+  AccordionWebMIDI.html
+  
+  MIDI Accordion Visualizer - Web-MIDI App
+  https://github.com/BarryKVibes/WebMIDIAccordionVisualizer
+  Copyright 2023, Barry K Vibes
+  
+ *******************************************************************************
+  
+  MIDI Accordion Visualizer - Web-MIDI App is free software: you can redistribute it and/or 
+  modify it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  MIDI Accordion Visualizer - Web-MIDI App is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU General Public License along 
+  with MIDI Accordion Visualizer - Web-MIDI App. If not, see <https://www.gnu.org/licenses/>.
+  
+ ******************************************************************************/
+ -->
+
 <!DOCTYPE html>
 <html>
 
@@ -20,6 +46,9 @@
       background-color: black;
       color: white;
     }
+    .circle.highlight {
+  fill: yellow;
+}
   </style>
 </head>
 
@@ -81,12 +110,19 @@
       [45, 40, 47, 42, 37, 44, 39, 46, 41, 36, 43, 38, 45, 40, 47, 42, 37, 44, 39, 46], // Root.
 
       // The following are the 4 rows of triads; Major, Minor, 7th, Diminished.
-      ['A', 'E', 'B', 'Gb', 'Db', 'Ab', 'Eb', 'Bb', 'F', 'C', 'G', 'D ', 'A', 'E', 'B', 'Gb', 'Db', 'Ab', 'Eb', 'Bb'], // Major
-      ['A', 'E', 'B', 'Gb', 'Db', 'Ab', 'Eb', 'Bb', 'F', 'C', 'G', 'D ', 'A', 'E', 'B', 'Gb', 'Db', 'Ab', 'Eb', 'Bb'], // Minor
-      ['A', 'E', 'B', 'Gb', 'Db', 'Ab', 'Eb', 'Bb', 'F', 'C', 'G', 'D ', 'A', 'E', 'B', 'Gb', 'Db', 'Ab', 'Eb', 'Bb'], // 7th
-      ['Gb', 'Db', 'Ab', 'Eb', 'Bb', 'F', 'C', 'G', 'D ', 'A', 'E', 'B', 'Gb', 'Db', 'Ab', 'Eb', 'Bb', 'F', 'C', 'Gb'] // Diminished
+      ['A', 'E', 'B', 'Gb', 'Db', 'Ab', 'Eb', 'Bb', 'F', 'C', 'G', 'D', 'A', 'E', 'B', 'Gb', 'Db', 'Ab', 'Eb', 'Bb'], // Major
+      ['A', 'E', 'B', 'Gb', 'Db', 'Ab', 'Eb', 'Bb', 'F', 'C', 'G', 'D', 'A', 'E', 'B', 'Gb', 'Db', 'Ab', 'Eb', 'Bb'], // Minor
+      ['A', 'E', 'B', 'Gb', 'Db', 'Ab', 'Eb', 'Bb', 'F', 'C', 'G', 'D', 'A', 'E', 'B', 'Gb', 'Db', 'Ab', 'Eb', 'Bb'], // Dominant7th
+      ['Gb', 'Db', 'Ab', 'Eb', 'Bb', 'F', 'C', 'G', 'D', 'A', 'E', 'B', 'Gb', 'Db', 'Ab', 'Eb', 'Bb', 'F', 'C', 'Gb'] // Diminished
     ];
 
+    // Create an object to map chord names to their corresponding row index.
+    const chordRowMap = {
+      "major": 0,
+      "minor": 1,
+      "dominant7th": 2,
+      "diminished": 3
+    }
 
     function onMIDISuccess(midiAccess) {
       for (let input of midiAccess.inputs.values()) {
@@ -146,10 +182,7 @@
       updateActiveNotes(channel, note, true);
 
       if (channel === MelodyChannel) {
-        //let activeNoteIndex = rightHandNotesActive.indexOf(note);
-        //const rowNum = 0;
-        //let notesInChannel = accordionMidiNotes[rowNum];
-        //let circleIndex = notesInChannel.indexOf(note);
+
         let notesInRow = accordionMidiNotes[0];
         let circleIndex = notesInRow.indexOf(note);
 
@@ -162,13 +195,6 @@
 
         let notesInMajor3rdRow = accordionMidiNotes[1];
         let notesInRootRow = accordionMidiNotes[2];
-
-        // Set circles in Major 3rd row. TODO: There may be more than one of the same note in the row. How to find all and set corresponding circles?
-        //let circleIndex = notesInMajor3rdRow.indexOf(note);
-        // if (circleIndex !== -1) {
-        //   let circle = leftHandSingleBassCircles[circleIndex];
-        //   circle.classList.add('active');
-        // }
 
         let circleIndices = findIndicesOfValue(notesInMajor3rdRow, note);
         for (let i = 0; i < circleIndices.length; i++) {
@@ -190,25 +216,17 @@
           return;
         }
 
-        //var [chordType, key] = getChordTypeAndKey(leftHandChordNotesActive);
+        // TODO: Recognize multiple chords.
         const chord = getChordTypeAndKey(leftHandChordNotesActive);
 
         console.log(`LH - Chord type: ${chord.chordType}, Key: ${chord.key}`);
 
-        // TODO: Not needed? let activeNoteIndex = leftHandChordNotesActive.indexOf(note);
-        const rowNum = 3; // TODO
-        let notesInChannel = accordionMidiNotes[rowNum];
-        let circleIndex = notesInChannel.indexOf(note);
-        if (circleIndex !== -1) {
-          let circle = leftHandChordCircles[0][circleIndex]; // TODO: Get chord for each row.
-          circle.classList.add('active');
-        }
+        // Highlight the corresponding circles for the active chord.
+        highlightChord(chord.chordType, chord.key, true);
       }
     }
 
     function noteOff(channel, note) {
-
-      updateActiveNotes(channel, note, false);
 
       switch (channel) {
         case MelodyChannel:
@@ -239,9 +257,51 @@
           break;
 
         case ChordChannel:
-          // TODO for leftHandChordCircles[0][circleIndex];
+          
+          if (leftHandChordNotesActive.length == 3) {
+
+            // TODO: Recognize multiple chords.
+            const chord = getChordTypeAndKey(leftHandChordNotesActive);
+
+            console.log(`LH - Chord type: ${chord.chordType}, Key: ${chord.key}`);
+
+            // Highlight the corresponding circles for the active chord.
+            highlightChord(chord.chordType, chord.key, false);
+          }
+
           break;
       }
+
+      updateActiveNotes(channel, note, false);
+    }
+
+    function highlightChord(chordType, chordName, isHighlight) {
+      let chordRow = chordRowMap[chordType];
+      if (chordRow == null) {
+        return;
+      }
+
+      let leftHandButtonRow = chordRow + 3; // Chord buttons start on 4th row. of accordionMidiNotes
+      let notesInChordRow = accordionMidiNotes[leftHandButtonRow];
+
+      if (chordName.includes('b') || chordName.includes('#')) {
+        chordName = chordName.substring(0, 2);
+      } else {
+        chordName = chordName.substring(0, 1);
+      }
+
+      let circles = leftHandChordCircles[chordRow];
+      let circleIndices = findIndicesOfValue(notesInChordRow, chordName);
+        for (let i = 0; i < circleIndices.length; i++) {
+          let circleIndex = circleIndices[i];
+          let circle = circles[circleIndex];
+          if (isHighlight) {
+            circle.classList.add('active');
+          }
+          else{
+            circle.classList.remove('active');
+          }
+        }
     }
 
     function init() {
@@ -335,17 +395,17 @@
       // Check for dominant 7ths with root on bottom.
       else if (intervals[0] === 4 && intervals[1] === 6) {
         const rootNote = sortedNotes[0];
-        return { chordType: 'dominant7', key: getKey(rootNote) };
+        return { chordType: 'dominant7th', key: getKey(rootNote) };
       }
       // Check for dominant 7ths with on 2nd note.
       else if (intervals[0] === 2 && intervals[1] === 4) {
         const rootNote = sortedNotes[1];
-        return { chordType: 'dominant7', key: getKey(rootNote) };
+        return { chordType: 'dominant7th', key: getKey(rootNote) };
       }
       // Check for dominant 7ths with root on top.
       else if (intervals[0] === 6 && intervals[1] === 2) {
         const rootNote = sortedNotes[2];
-        return { chordType: 'dominant7', key: getKey(rootNote) };
+        return { chordType: 'dominant7th', key: getKey(rootNote) };
       }
       // Check for diminished triads with root on bottom.
       else if (intervals[0] === 3 && intervals[1] === 3) {
