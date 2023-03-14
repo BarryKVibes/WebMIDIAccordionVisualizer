@@ -355,6 +355,21 @@
           }
         } // end rowNum
       } // end channel
+
+      // Put the left-hand rows of buttons on a diagonal.
+      // Select all rows of circles
+      const rows = accordion.querySelectorAll('.notes-container');
+
+      let firstOffset = 8
+
+      // Loop through each row
+      for (let i = 2; i < rows.length; i++) {
+        const currRow = rows[i];
+        curOffset = (i-1)*firstOffset;
+
+        // Set the margin for the current row
+        currRow.style.marginLeft = `${curOffset}px`;
+      }
     } // end init()
 
     function getChordTypeAndKey(notes) {
